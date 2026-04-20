@@ -1,0 +1,465 @@
+<!DOCTYPE html> 
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#ff7f50">
+  <link rel="manifest" href="manifest.json">
+  <title>Lịch trình</title>
+  <style>
+    :root {
+      --main: #ff7f50;
+      --light: #fff5f0;
+      --gray: #555;
+    }
+    body {
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #e8ffdc;
+      margin: 20px 0 0 0;
+      padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+      color: #333;
+    }
+    select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      font-size:1rem;
+      font-family: inherit;
+      color:#333;
+      background:#fff;
+    }
+    h2 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin: 20px 0 14px;
+      color: #42891e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    input[type="datetime-local"]{
+      width:100%;
+      min-width:0;
+      max-width:100%;
+      font-size:16px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .input-block input,
+    .input-block select{
+      width:100%;
+      min-width:0;
+    }
+    .card {
+      max-width: 90%;
+      margin: 0 auto;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      padding: 14px;
+    }
+    .table-wrapper {
+      height: 350px;
+      overflow-y: auto;
+      overflow-x: auto;
+      border: 1px solid #f3f3f3;
+      border-radius: 12px;
+    }
+    .table-wrapper::-webkit-scrollbar { width: 6px; }
+    .table-wrapper::-webkit-scrollbar-thumb {
+      background: #ffb89e;
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+      table-layout: fixed;
+    }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+      word-break: break-word;
+      white-space: normal;
+    }
+    th {
+      background: #e8ffdc;
+      text-align: left;
+      color: var(--gray);
+      font-weight: 600;
+      font-size: 0.95rem;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    tr.date-header td{
+      background:#f5f5f5;
+      font-weight:600;
+      color:#666;
+      width: 100%;
+      display: table-cell;
+      padding-left:12px;
+    }
+    tr:hover td { background: #fff9f6; transition: 0.2s; }
+    input[type="text"], input[type="datetime-local"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      outline: none;
+      box-sizing: border-box;
+      background-color: #fff !important;
+      color-scheme: light;
+      color: #333;
+    }
+    input[type="text"]:focus, input[type="datetime-local"]:focus {
+      border-color: var(--main);
+      box-shadow: 0 0 6px rgba(255,127,80,0.3);
+    }
+
+    button {
+      padding: 9px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.25s;
+      font-size: 0.95rem;
+    }
+
+    #addBtn { background: #91b57f; color: white; width: 100%; }
+    #addBtn:hover { background: #91b57f; }
+    .delete, .edit { background: #eee; color: #444; margin-left: 4px; }
+    .delete:hover { background: #f44336; color: white; }
+    .edit:hover { background: #2196f3; color: white; }
+
+    .done { text-decoration: line-through; opacity: 0.6; }
+
+    .empty {
+      text-align: center;
+      color: #999;
+      padding: 20px 0;
+    }
+
+    .input-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px 0;
+    }
+
+    td:nth-child(3) {
+      max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    td:last-child {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    td.empty {
+      display: table-cell !important;
+      flex: none !important;
+      text-align: center;
+    }
+    td:last-child button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--main);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      font-weight: 500;
+      z-index: 999;
+      min-width: 180px;
+      text-align: center;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-10px);
+    }
+    .toast.success { background: #4caf50; } 
+    .toast.error { background: #f44336; }  
+    .toast.info { background: #2196f3; }    
+    .toast.warn { background: #ff9800; }    
+    #confirmBox {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+    .confirm-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      width: 90%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .back {
+      text-align: center;
+      margin-top: 12px;
+    }
+    .back a {
+      text-decoration: none;
+      color: #888;
+      font-size: 14px;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    @media (max-width: 480px) {
+      th, td { font-size: 0.9rem; padding: 8px 6px; }
+      input[type="text"], input[type="datetime-local"] { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+  <h2>Lịch trình</h2>
+
+  <div class="card">
+    <div class="table-wrapper">
+      <table id="menuTable">
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>Món</th>
+            <th>Địa chỉ</th>
+            <th>Ngày giờ</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="input-block">
+      <input type="text" id="dishInput" placeholder="Tên món, hoạt động...">
+      <input type="text" id="addressInput" placeholder="Địa chỉ...">
+      <input type="datetime-local" id="datetimeInput">   
+      <select id="typeInput">
+        <option value="food">Ăn uống</option>
+        <option value="move">Di chuyển</option>
+        <option value="room">Phòng</option>
+        <option value="travel">Tham quan</option>
+        <option value="extra">Dự phòng</option>
+      </select>   
+      <button id="addBtn">➕ Thêm</button>
+    </div>
+    <div class="back">
+      <a href="index.html">← Quay lại menu</a>
+    </div>
+  </div>
+
+  <footer>© 2025 Lê Thị Ngọc Dung</footer>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="confirmBox">
+    <div class="confirm-content">
+      <p>Bạn có chắc muốn xóa món này?</p>
+      <div class="confirm-btns">
+        <button class="confirm-cancel">Hủy</button>
+        <button class="confirm-ok">Xóa</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "foodList_v1.1";
+    let editId = null;
+
+    function loadList() {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }
+    function saveList(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function showToast(msg, type = "info") {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function formatDateTime(dtString) {
+      if (!dtString) return "--";
+      const d = new Date(dtString);
+      if (isNaN(d)) return "--";
+      return d.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("tableBody");
+      const list = loadList();
+      tbody.innerHTML = "";
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty">Chưa có món nào 🍜</td></tr>`;
+        return;
+      }
+      list.sort((a, b) => new Date(a.datetime || 0) - new Date(b.datetime || 0));
+      const grouped = {};
+      list.forEach(item => {
+        const dateKey = item.datetime
+          ? new Date(item.datetime).toLocaleDateString("vi-VN")
+          : "Chưa có ngày";
+
+        if (!grouped[dateKey]) grouped[dateKey] = [];
+        grouped[dateKey].push(item);
+      });
+      Object.keys(grouped).forEach(date => {
+        const trDate = document.createElement("tr");
+        trDate.classList.add("date-header");
+        trDate.innerHTML = `
+      <td colspan="5" style="background:#f5f5f5;font-weight:600;color:#666;">
+        📅 ${date}
+      </td>`;
+        tbody.appendChild(trDate);
+        grouped[date].forEach(item => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td><input type="checkbox" ${item.done ? "checked" : ""}></td>
+        <td class="${item.done ? "done" : ""}">${item.dish}</td>
+        <td class="${item.done ? "done" : ""}">
+          <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}"
+             target="_blank">${item.address}</a>
+        </td>
+        <td>${formatDateTime(item.datetime)}</td>
+        <td>
+          <button class="edit" data-id="${item.id}">✏️</button>
+          <button class="copy-btn">📋</button>
+          <button class="delete" data-id="${item.id}">🗑️</button>
+        </td>`;
+          tr.querySelector("input").onchange = (e) => {
+            const listAll = loadList();
+            const found = listAll.find(x => x.id === item.id);
+            if (found) {
+              found.done = e.target.checked;
+              saveList(listAll);
+            }
+            renderTable();
+          };
+          tr.querySelector(".copy-btn").onclick = () => copyAddress(item.address);
+          tr.querySelector(".delete").onclick = () => confirmDelete(item.id);
+          tr.querySelector(".edit").onclick = () => startEdit(item.id);
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    function startEdit(id) {
+      const list = loadList();
+      const item = list.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById("dishInput").value = item.dish;
+      document.getElementById("addressInput").value = item.address;
+      document.getElementById("datetimeInput").value = item.datetime;
+      document.getElementById("typeInput").value = item.type;
+      document.getElementById("addBtn").textContent = "💾 Lưu";
+      editId = id;
+    }
+
+    document.getElementById("addBtn").onclick = () => {
+      const dish = document.getElementById("dishInput").value.trim();
+      const address = document.getElementById("addressInput").value.trim();
+      const datetime = document.getElementById("datetimeInput").value;
+      const type = document.getElementById("typeInput").value;
+      const list = loadList();
+
+      if (!dish || !address) {
+        showToast("⚠️ Vui lòng nhập món!", "warn");
+        return;
+      }
+
+      if (editId !== null) {
+        const idx = list.findIndex(i => i.id === editId);
+        if (idx !== -1) list[idx] = { ...list[idx], dish, address, datetime, type };
+        editId = null;
+        document.getElementById("addBtn").textContent = "➕ Thêm";
+        showToast("💾 Đã lưu chỉnh sửa!", "success");
+      } else {
+        list.push({
+          id: Date.now(),
+          dish,
+          address,
+          datetime,
+          type,
+          done: false
+        });
+        showToast("🍴 Đã thêm món mới!","success");
+      }
+
+      saveList(list);
+      document.getElementById("dishInput").value = "";
+      document.getElementById("addressInput").value = "";
+      document.getElementById("datetimeInput").value = "";
+      document.getElementById("typeInput").value = "food";
+      renderTable();
+    };
+
+    function confirmDelete(id) {
+      const confirmBox = document.getElementById("confirmBox");
+      confirmBox.style.display = "flex";
+      confirmBox.querySelector(".confirm-cancel").onclick = () => confirmBox.style.display = "none";
+      confirmBox.querySelector(".confirm-ok").onclick = () => {
+        const list = loadList().filter(item => item.id !== id);
+        saveList(list);
+        confirmBox.style.display = "none";
+        showToast("🗑️ Đã xóa món!","success");
+        renderTable();
+      };
+    }
+
+    function copyAddress(address) {
+      navigator.clipboard.writeText(address)
+        .then(() => showToast("📋 Đã copy địa chỉ!", "info"))
+        .catch(() => showToast("⚠️ Copy thất bại!", "warn"));
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js').catch(err => console.error("SW lỗi:", err));
+    }
+    renderTable();
+  </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi phí du lịch</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #e8ffdc;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    width: 90%;
+    max-width: 350px;
+    margin-bottom: 60px; 
+  }
+
+  h2 {
+    text-align: center;
+    color: #42891e;
+    margin-bottom: 20px;
+  }
+
+  label {
+    font-size: 14px;
+    display: block;
+    margin-top: 10px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    text-align: right;
+    font-size: 15px;
+  }
+
+  button {
+    margin: 15px auto 0;
+    display: block;
+    width: 60%;
+    background: #91b57f;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+  }
+
+  button:hover { background: #91b57f; }
+
+  .result {
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
+    color: #42891e;
+  }
+
+  .error {
+    color: red;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  footer {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #aaa;
+    font-size: 0.85rem;
+  }
+  .back {
+    text-align: center;
+    margin-top: -25px;
+  }
+
+  .back a {
+    text-decoration: none;
+    color: #888;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h2>Tính chi phí du lịch</h2>
+    <label>Chi phí di chuyển:</label>
+    <input type="text" id="move" placeholder="VND" oninput="formatAndSave(this)">
+    <label>Chi phí tham quan:</label>
+    <input type="text" id="travel" placeholder="VND" oninput="formatAndSave(this)">
+    <label>Chi phí ăn uống:</label>
+    <input type="text" id="food" placeholder="VND" oninput="formatAndSave(this)">
+    <label>Chi phí phòng:</label>
+    <input type="text" id="room" placeholder="VND" oninput="formatAndSave(this)">
+    <label>Chi phí dự phòng:</label>
+    <input type="text" id="extra" placeholder="VND" oninput="formatAndSave(this)">
+    <div class="result" id="result"></div>
+  </div>
+  <div class="back">
+    <a href="index.html">← Quay lại menu</a>
+  </div>
+  <footer>© 2025 Lê Thị Ngọc Dung</footer>
+
+  <script>
+    const STORAGE_KEY = "travelCost_v2";
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      for (let id of ["move", "travel", "food", "room", "extra"]) {
+        if (data[id]) document.getElementById(id).value = data[id];
+      }
+      if (data.total) {
+        document.getElementById("result").textContent =
+          "💰 Tổng chi phí: " + data.total + " VND";
+      }
+      loadFromSchedule()
+      calcTotal()
+    });
+    function formatAndSave(input) {
+      formatNumber(input);
+      saveData();
+      calcTotal();   
+    }
+    function saveData() {
+      const fields = ["move", "travel", "food", "room", "extra"];
+      let data = {};
+      fields.forEach(id => data[id] = document.getElementById(id).value);
+      const old = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      data.total = old.total || ""; // giữ lại tổng cũ nếu chưa tính lại
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function formatNumber(input) {
+      let value = input.value.replace(/\D/g, "");
+      input.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function calcTotal() {
+      const ids = ["move", "travel", "food", "room", "extra"];
+      const result = document.getElementById("result");
+      const total = ids
+        .map(id => Number(document.getElementById(id).value.replace(/\./g, "")) || 0)
+        .reduce((a, b) => a + b, 0);
+      const totalStr = total.toLocaleString("vi-VN");
+      result.textContent = "💰 Tổng chi phí: " + totalStr + " VND";
+      const data = {};
+      ids.forEach(id => data[id] = document.getElementById(id).value);
+      data.total = totalStr;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }  
+    
+    function loadFromSchedule() {
+      const list = JSON.parse(localStorage.getItem("foodList_v1.1") || "[]")
+      let total = {
+        move: 0,
+        travel: 0,
+        food: 0,
+        room: 0,
+        extra: 0
+      }
+      list.forEach(i => {
+        if (i.type && total[i.type] != undefined) {
+
+          const price = Number(i.price || 0)
+          const qty = Number(i.qty || 0)
+
+          total[i.type] += price * qty
+        }
+      })
+      document.getElementById("move").value = total.move.toLocaleString("vi-VN")
+      document.getElementById("travel").value = total.travel.toLocaleString("vi-VN")
+      document.getElementById("food").value = total.food.toLocaleString("vi-VN")
+      document.getElementById("room").value = total.room.toLocaleString("vi-VN")
+      document.getElementById("extra").value = total.extra.toLocaleString("vi-VN")
+      calcTotal()
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi phí thực tế</title>
+<style>
+  :root {
+    --main: #ff7f50;
+  }
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: #e8ffdc;
+    margin: 20px 0 0 0;
+    padding: 16px;
+    color: #333;
+  }
+  h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #42891e;
+    margin-top: 20px;
+  }
+  .card {
+    max-width: 95%;
+    margin: 20px auto;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    padding: 14px;
+  }
+  .table-container {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #f3f3f3;
+    border-radius: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  th {
+    background: #e8ffdc;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  td {
+    text-align: left;
+    vertical-align: middle;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    text-align: left;
+  }
+  input:focus {
+    border-color: var(--main);
+    box-shadow: 0 0 6px rgba(255,127,80,0.3);
+    outline: none;
+  }
+  .back {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .back a {
+    text-decoration: none;
+    color: #888;
+    font-size: 0.95rem;
+  }
+  footer {
+    text-align: center;
+    color: #aaa;
+    margin-top: 190px;
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<h2>Chi phí thực tế</h2>
+
+<div class="card">
+  <div class="table-container">
+    <table id="bangMon">
+      <thead>
+        <tr>
+          <th>Tên món</th>
+          <th>Số lượng</th>
+          <th>Giá (VND)</th>
+          <th>Tổng (VND)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="back">
+    <a href="index.html">← Quay lại menu</a>
+  </div>
+</div>
+
+<footer>© 2025 Lê Thị Ngọc Dung</footer>
+<script>
+  const STORAGE_KEY = "foodList_v1.1";
+  const tbody = document.querySelector("#bangMon tbody");
+  let dsMon = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+  if (dsMon.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#999;">Chưa có món nào 🍜</td></tr>`;
+  } else {
+    dsMon.forEach((item, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.dish}</td>
+        <td><input type="number" min="1" placeholder="Nhập SL..." value="${item.qty || ''}" onchange="capNhatDuLieu(${index})"></td>
+        <td><input type="text" placeholder="Nhập giá..." value="${item.price ? Number(item.price).toLocaleString('vi-VN') : ''}" 
+            oninput="formatGia(this, ${index})"></td>
+        <td class="tong-mon">0</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    tinhTong();
+  }
+
+  function formatGia(input, index) {
+    let val = input.value.replace(/\D/g, "");
+    if (val === "") {
+      input.value = "";
+      capNhatDuLieu(index);
+      return;
+    }
+    input.value = Number(val).toLocaleString("vi-VN");
+    capNhatDuLieu(index);
+  }
+
+  function capNhatDuLieu(index) {
+    const tr = document.querySelectorAll("#bangMon tbody tr")[index];
+    const soLuong = parseFloat(tr.children[1].querySelector("input").value) || 0;
+    const giaRaw = tr.children[2].querySelector("input").value.replace(/\./g, "");
+    const gia = parseFloat(giaRaw) || 0;
+
+    dsMon[index].qty = soLuong;
+    dsMon[index].price = gia;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dsMon));
+
+    tinhTong();
+  }
+
+  function tinhTong() {
+    document.querySelectorAll("#bangMon tbody tr").forEach(tr => {
+      const soLuong = parseFloat(tr.children[1].querySelector("input").value) || 0;
+      const giaRaw = tr.children[2].querySelector("input").value.replace(/\./g, "");
+      const gia = parseFloat(giaRaw) || 0;
+      const tongMon = soLuong * gia;
+
+      tr.querySelector(".tong-mon").textContent =
+        tongMon.toLocaleString("vi-VN");
+    });
+  }
+</script>
+</body>
+</html>
